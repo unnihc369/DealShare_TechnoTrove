@@ -1,118 +1,183 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import HomeScreen from './src/HomeScreen';
+import DetailsScreen from './src/DetailScreen';
+import Subcategories from './src/SubCategories';
+import Products from './src/Products';
+import { Provider } from 'react-redux';
+import store from './src/store/store';
+import Cart from './src/components/Cart';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+export type RootStackParamList = {
+  Home: undefined;
+  Details: { product: Product };
+  SubCategories: { id : string},
+  Products: {subCategoryId: string},
+  Cart:undefined,
+};
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
+interface Product {
+  id: string;
+  name: string;
+  price: string;
+  image: string;
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+const Stack = createStackNavigator<RootStackParamList>();
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
+const App: React.FC = () => {
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <Provider store={store}>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Details" component={DetailsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="SubCategories" component={Subcategories} options={{ headerShown: false }}/>
+        <Stack.Screen name="Products" component={Products} options={{ headerShown: false}}/>
+        <Stack.Screen name='Cart' component={Cart} />
+      </Stack.Navigator>
+    </NavigationContainer>
+    </Provider>
   );
-}
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+};
 
 export default App;
+
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: '#fff',
+//     padding: 25,
+//   },
+//   tabs:{
+//     paddingVertical:10,
+//     flexDirection:'row',
+//     overflow:'scroll',
+//   },
+//   button: {
+//     paddingVertical: 10,
+//     paddingHorizontal: 24,
+//     marginRight: 16,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     borderRadius: 15,
+//     borderWidth: 1,
+//     borderColor: '#ccc',
+//   },
+//   selectedButton: {
+//     backgroundColor: '#E29B56', 
+//     borderColor: '#E29B56', 
+//   },
+//   buttonText: {
+//     fontSize: 16,
+//     color: '#ccc', 
+//   },
+//   selectedButtonText: {
+//     color: '#fff', 
+//   },
+//   search:{
+//     backgroundColor: '#fafafa',
+//     padding:15,
+//     borderRadius: 8,
+//     marginBottom: 5,
+//   },
+//   header: {
+//     fontSize: 20,
+//     fontWeight: 'bold',
+//     marginBottom: 16,
+//   },
+//   card: {
+//     flex: 1,
+//     backgroundColor: '#fff',
+//     borderRadius: 8,
+//     margin: 8,
+//     padding: 16,
+//     shadowColor: '#000',
+//     shadowOffset: { width: 0, height: 2 },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 3,
+//     elevation: 3,
+//     marginBottom:15,
+//   },
+//   image: {
+//     width: 120,
+//     height: 120,
+//     resizeMode: 'contain',
+//     backgroundColor:'#efedfd',
+//     borderRadius:6,
+//     margin:'auto',
+//   },
+//   detailImage: {
+//     width: 200,
+//     height: 200,
+//     resizeMode: 'contain',
+//     marginBottom: 16,
+//     marginTop:10,
+//     marginHorizontal:'auto',
+//   },
+//   name: {
+//     fontSize: 16,
+//     fontWeight: 'bold',
+//     marginVertical: 8,
+//   },
+//   description: {
+//     fontSize: 14,
+//     color: '#555',
+//     marginBottom: 16,
+//   },
+//   price: {
+//     fontSize: 14,
+//     fontWeight: 'bold',
+//     color: '#E29B56',
+//   },
+//   header1: {
+//     flexDirection: 'row',
+//     justifyContent: 'space-between',
+//     alignItems: 'center',
+//     paddingHorizontal: 16,
+//     height: 60,
+//     backgroundColor: '#fff',
+//     borderBottomWidth: 1,
+//     borderBottomColor: '#ddd',
+//   },
+//   headerTitle: {
+//     fontSize: 18,
+//     fontWeight: 'bold',
+//     textAlign: 'center',
+//   },
+//   iconButton: {
+//     padding: 8,
+//   },
+//   iconText: {
+//     fontSize: 20,
+//   },
+//   priceBox:{
+//     position: 'absolute', 
+//     bottom: 0, 
+//     left: 0,
+//     right: 0,
+//     backgroundColor: '#fff', 
+//     fontSize:24,
+//     flexDirection:'row',
+//     alignItems:'center',
+//     gap: 10,
+//     padding: 16, 
+//     borderTopWidth: 1, 
+//     borderTopColor: '#ddd',
+//   },
+//   readMore: {
+//     fontSize: 14,
+//     fontWeight: 'bold',
+//     color: '#007BFF',
+//     marginBottom: 16,
+//   },
+// });
+
+/*
+-> need to make scroll 
+-> need to add icons
+-> multiple varients didplay
+-> card number display
+*/
