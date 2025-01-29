@@ -33,7 +33,7 @@ const DetailsScreen: React.FC<{ route: DetailsScreenRouteProp; navigation: any }
     try {
       const response = await fetch(`http://10.0.2.2:8080/api/products/subcategory/${product.subCategoryId}`);
       const data = await response.json();
-      const filteredProducts = data.filter((p: any) => p.id !== product.id); 
+      const filteredProducts = data.filter((p: any) => p.id != product.id); 
       setRelatedProducts(filteredProducts);
     } catch (error) {
       console.error('Error fetching related products:', error);
@@ -200,7 +200,7 @@ const DetailsScreen: React.FC<{ route: DetailsScreenRouteProp; navigation: any }
                       selectedVariant.skuId === variant.skuId && styles.selectedThumbnail,
                     ]}
                   >
-                    <Image source={iphone15} style={styles.thumbnail} />
+                    <Image source={variant.image} style={styles.thumbnail} />
                   </TouchableOpacity>
                 ))}
               </View>

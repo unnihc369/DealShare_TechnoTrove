@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, StyleSheet, Alert, TextInput } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store/store'; 
-import { updateQuantity } from '../store/slices/cartSlice';  
-import { CartItem } from '../store/slices/cartSlice';  
+import { RootState } from '../store/store';
+import { updateQuantity, clearCart } from '../store/slices/cartSlice';
+import axios from 'axios';
 
 const Cart: React.FC = () => {
-  const { items } = useSelector((state: RootState) => state.cart); 
+  const { items } = useSelector((state: RootState) => state.cart);
   const dispatch = useDispatch();
 
-  const [currentSkuIndex, setCurrentSkuIndex] = useState<number>(0); 
+  const [currentSkuIndex, setCurrentSkuIndex] = useState<number>(0);
+  const [scheduledTime, setScheduledTime] = useState<string>('2025-01-29 11:07'); 
 
   useEffect(() => {
     const skuToggleInterval = setInterval(() => {
@@ -27,6 +28,70 @@ const Cart: React.FC = () => {
     return items.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
+  const orderNow = async () => {
+    const orderPayload = {
+      orderNumber: `ORD${Date.now()}`, // Generate a unique order number
+      orderItems: items.map((item) => ({
+        productId: item.productId,
+        skuId: item.skuId,
+        skuName: item.skuName,
+        productName: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        imageUrl: item.image,
+      })),
+      totalAmount: calculateTotalPrice(),
+    };
+
+    try {
+      const response = await axios.post('http://10.0.2.2:8080/api/orders', orderPayload);
+      if (response.status === 201 || response.status === 200) {
+        Alert.alert('Order Successful', 'Your order has been placed successfully!');
+        dispatch(clearCart()); // Clear the cart state
+      }
+    } catch (error) {
+      Alert.alert('Order Failed', 'There was an issue placing your order. Please try again later.');
+      console.error('Order API Error:', error);
+    }
+  };
+
+  const scheduleOrder = async () => {
+    if (!scheduledTime || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(scheduledTime)) {
+      Alert.alert('Invalid Time', 'Please enter a valid time in the format YYYY-MM-DD HH:mm.');
+      return;
+    }
+
+    const formattedTime = scheduledTime.replace(' ', 'T') + ':00';
+
+    console.log('Formatted Scheduled Time:', formattedTime);
+
+    const orderPayload = {
+      orderNumber: `ORD${Date.now()}`, // Generate a unique order number
+      scheduledTime:formattedTime, // Add the scheduled time
+      orderItems: items.map((item) => ({
+        productId: item.productId,
+        skuId: item.skuId,
+        skuName: item.skuName,
+        productName: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        imageUrl: item.image,
+      })),
+      totalAmount: calculateTotalPrice(),
+    };
+
+    try {
+      const response = await axios.post('http://10.0.2.2:8080/api/orders/schedules', orderPayload);
+      if (response.status === 201 || response.status === 200) {
+        Alert.alert('Order Scheduled', 'Your order has been scheduled successfully!');
+        dispatch(clearCart()); // Clear the cart state
+      }
+    } catch (error) {
+      Alert.alert('Scheduling Failed', 'There was an issue scheduling your order. Please try again later.');
+      console.error('Order API Error:', error);
+    }
+  };
+
   if (items.length === 0) {
     return (
       <View style={styles.emptyCartContainer}>
@@ -40,7 +105,6 @@ const Cart: React.FC = () => {
       <ScrollView showsHorizontalScrollIndicator={false}>
         {items.map((item, index) => (
           <View key={index} style={styles.carouselItem}>
-
             <Image source={{ uri: item.image }} style={styles.itemImage} />
             <Text style={styles.itemName}>{item.name} - {item.skuName}</Text>
             <Text style={styles.itemPrice}>${item.price}</Text>
@@ -67,8 +131,22 @@ const Cart: React.FC = () => {
 
       <View style={styles.totalContainer}>
         <Text style={styles.totalPrice}>Total Price: ${calculateTotalPrice()}</Text>
-        <TouchableOpacity style={styles.editButton}>
+
+        <TouchableOpacity style={styles.editButton} onPress={orderNow}>
           <Text style={styles.editButtonText}>Order Now</Text>
+        </TouchableOpacity>
+
+        <TextInput
+          placeholder="Enter scheduled time (YYYY-MM-DD HH:mm)"
+          value={scheduledTime}
+          onChangeText={setScheduledTime}
+          style={styles.input}
+        />
+
+
+
+        <TouchableOpacity style={styles.scheduleButton} onPress={scheduleOrder}>
+          <Text style={styles.scheduleButtonText}>Schedule Order</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -92,6 +170,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     width: 200,
+    marginBottom: 10
   },
   itemImage: {
     width: 55,
@@ -136,12 +215,13 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    flexDirection:'row',
-    gap:15,
     shadowRadius: 4,
     elevation: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: 'column', // Horizontal alignment of children
+    alignItems: 'center', // Center items vertically
+    justifyContent: 'space-between', // Space between child elements
+    gap: 10, // Consistent spacing between children
+    width: '100%', // Full width of the container
   },
   totalPrice: {
     fontSize: 14,
@@ -170,6 +250,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FF8C00',
   },
+  input: { borderWidth: 1, borderColor: 'gray', borderRadius: 5, padding: 10, width: 300, marginBottom: 10 },
+  scheduleButton: { backgroundColor: '#2196F3', padding: 15, borderRadius: 5, marginVertical: 10, width: '100%' },
+  scheduleButtonText: { color: 'white', textAlign: 'center', fontWeight: 'bold' },
 });
 
 export default Cart;

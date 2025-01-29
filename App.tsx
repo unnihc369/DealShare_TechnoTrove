@@ -8,6 +8,7 @@ import Products from './src/Products';
 import { Provider } from 'react-redux';
 import store from './src/store/store';
 import Cart from './src/components/Cart';
+import Orders from './src/components/Orders';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -15,13 +16,22 @@ export type RootStackParamList = {
   SubCategories: { id : string},
   Products: {subCategoryId: string},
   Cart:undefined,
+  Orders:undefined,
 };
 
 interface Product {
   id: string;
   name: string;
-  price: string;
-  image: string;
+  description: string;
+  categoryId: number;
+  subCategoryId: number;
+  launchDate: string;
+  status: string;
+  tags: string[]; 
+  createdAt: string;
+  updatedAt: string;
+  price: number;
+  imageUrls: string[];
 }
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -36,6 +46,7 @@ const App: React.FC = () => {
         <Stack.Screen name="SubCategories" component={Subcategories} options={{ headerShown: false }}/>
         <Stack.Screen name="Products" component={Products} options={{ headerShown: false}}/>
         <Stack.Screen name='Cart' component={Cart} />
+        <Stack.Screen name='Orders' component={Orders}/>
       </Stack.Navigator>
     </NavigationContainer>
     </Provider>
@@ -174,10 +185,3 @@ export default App;
 //     marginBottom: 16,
 //   },
 // });
-
-/*
--> need to make scroll 
--> need to add icons
--> multiple varients didplay
--> card number display
-*/

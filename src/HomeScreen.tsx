@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
+  Button,
 } from 'react-native';
 import axios from 'axios';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -33,7 +34,7 @@ interface Product {
   subCategoryId: number;
   launchDate: string;
   status: string;
-  tags: string[]; 
+  tags: string[];
   createdAt: string;
   updatedAt: string;
   price: number;
@@ -45,12 +46,44 @@ const HomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = ({ naviga
   const [selectedButton, setSelectedButton] = useState<string>('All');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, SetCategories] = useState({});
+  const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
   const dispatch = useDispatch();
+
+
   const likedProducts = useSelector((state: RootState) => state.likedProducts.likedProducts);
   const { items } = useSelector((state: RootState) => state.cart);
+  const [searchText, setSearchText] = useState("");
+  const [searchedText, setSearchedText] = useState("");
+
+  const handleInputChange = (text: string) => {
+    setSearchText(text);
+  };
+
+  const handleSearchSubmit = async () => {
+
+    if (searchText.trim()) {
+
+      try {
+        const formattedSearchText = searchText.toLowerCase()
+          .split(" ")
+          .filter((word) => word.trim() !== "")
+          .join("");
+        console.log(formattedSearchText)
+        const response = await axios.get(
+          `http://10.0.2.2:8080/api/products/search?tag=${formattedSearchText}`
+        );
+        setSearchedText(searchText);
+        setSearchResults(response.data);
+        setIsSearchActive(true);
+      } catch (error) {
+        console.error("Error searching products:", error);
+      }
+    }
+  };
 
   const isLiked = (productId) => {
-    return likedProducts.some((product) => product.id === productId);
+    return likedProducts.some((product) => product.id == productId);
   };
 
   const handleToggleLike = (product) => {
@@ -64,22 +97,22 @@ const HomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = ({ naviga
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://10.0.2.2:8080/api/variants/frequent-products/6');
+        const response = await axios.get('http://10.0.2.2:8080/api/variants/frequent-products/2');
         const fetchedProducts = response.data.map((product: any) => ({
-          id: product.id.toString(),             
-          name: product.name,                  
-          description: product.description,        
-          categoryId: product.categoryId,          
-          subCategoryId: product.subCategoryId,    
-          launchDate: product.launchDate,          
-          status: product.status,                
-          tags: JSON.parse(product.tags),         
-          createdAt: product.createdAt,            
-          updatedAt: product.updatedAt,           
-          price: product.price,                   
-          imageUrls: product.imageUrls,           
+          id: product.id.toString(),
+          name: product.name,
+          description: product.description,
+          categoryId: product.categoryId,
+          subCategoryId: product.subCategoryId,
+          launchDate: product.launchDate,
+          status: product.status,
+          tags: JSON.parse(product.tags),
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt,
+          price: product.price,
+          imageUrls: product.imageUrls,
         }));
-        
+
         setProducts(fetchedProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -89,8 +122,7 @@ const HomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = ({ naviga
     fetchProducts();
   }, []);
 
-
-  const buttons = ['All', 'Mobile', 'Laptop','Home Applications'];
+  const buttons = ['All', 'Mobile', 'Laptop', 'Home Applications'];
 
   const likeBtn = '../assests/whiteHeart.png'
 
@@ -105,6 +137,7 @@ const HomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = ({ naviga
       try {
         const response = await axios.get('http://10.0.2.2:8080/api/categories');
         SetCategories(response.data);
+
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -117,11 +150,62 @@ const HomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = ({ naviga
     <View style={styles.container}>
       <Text style={styles.headTitle}>TechnoTrove</Text>
       <View style={styles.searchBar}>
-        <Image source={searchIcon} style={styles.searchIc} />
-        <TextInput style={styles.search} placeholder="Search here.." />
+        <TextInput style={styles.search} onChangeText={handleInputChange} placeholder="Search here.." />
+        <TouchableOpacity style={styles.searchBtn} onPress={handleSearchSubmit}>
+          <Image source={searchIcon} style={styles.searchIc} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
+        {isSearchActive && (
+          <View>
+            <Text style={styles.header}>Search Results for "{searchedText}"</Text>
+            {searchResults.length > 0 ? (
+              <FlatList
+                data={searchResults}
+                numColumns={2}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <View style={styles.card}>
+                    <TouchableOpacity
+                      style={styles.likeButton}
+                      onPress={() => handleToggleLike(item)}
+                    >
+                      {isLiked(item.id) ? (
+                        <Image source={likebtn} style={styles.likebtn} />
+                      ) : (
+                        <Image source={likedbtn} style={styles.likebtn} />
+                      )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate('Details', { product: item })
+                      }
+                    >
+                      <Image
+                        source={{ uri: item.imageUrls[0] }}
+                        style={styles.image}
+                      />
+                    </TouchableOpacity>
+
+                    <Text style={styles.name}>
+                      {item.name.length > 14
+                        ? `${item.name.slice(0, 14)}...`
+                        : item.name}
+                    </Text>
+
+                    <Text style={styles.price}>{item.price}</Text>
+                  </View>
+                )}
+              />
+            ) : (
+              <Text style={styles.noResultsText}>No results found.</Text>
+            )}
+          </View>
+        )}
+
+
         {/* Filter buttons */}
         <View style={styles.tabs}>
           <FlatList
@@ -156,7 +240,7 @@ const HomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = ({ naviga
             <View style={styles.card}>
               <TouchableOpacity
                 style={styles.likeButton}
-                onPress={() => handleToggleLike(item)}  
+                onPress={() => handleToggleLike(item)}
               >
                 {isLiked(item.id) ? (
                   <Image source={likebtn} style={styles.likebtn} />
@@ -165,7 +249,7 @@ const HomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = ({ naviga
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => console.log("Navigating to product details")}>
+              <TouchableOpacity onPress={() => navigation.navigate('Details', { product: item })}>
                 <Image source={{ uri: item.imageUrls[0] }} style={styles.image} />
               </TouchableOpacity>
 
@@ -196,6 +280,13 @@ const HomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = ({ naviga
             </TouchableOpacity>
           )}
         />
+
+        <View style={styles.containerOrder}>
+          <Text style={styles.title}>Want to see your previous orders?</Text>
+          <TouchableOpacity style={styles.buttonOrders} onPress={()=>navigation.push('Orders')}>
+            <Text style={styles.buttonTextOrders}>View Orders</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Liked Products Section */}
         <LikedProducts navigation={navigation} />
@@ -235,7 +326,12 @@ const styles = StyleSheet.create({
   searchIc: {
     height: 20,
     width: 20,
-    marginLeft: 10,
+    margin: 6,
+    borderRadius: 8
+  },
+  searchBtn: {
+    backgroundColor: '#fff',
+    borderRadius: 8
   },
   button: {
     paddingVertical: 10,
@@ -292,6 +388,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     marginBottom: 5,
+    width: 320,
   },
   header: {
     marginTop: 10,
@@ -388,6 +485,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+  },
+  containerOrders: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    padding: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  buttonOrders: {
+    backgroundColor: '#FF8C00',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  buttonTextOrders: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

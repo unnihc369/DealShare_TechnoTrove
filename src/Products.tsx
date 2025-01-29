@@ -7,7 +7,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { toggleLikeProduct } from '../src/store/slices/likedProductSlices';
 
+
 const Products = ({ route, navigation }) => {
+    
     const { subCategoryId } = route.params;
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,7 +17,7 @@ const Products = ({ route, navigation }) => {
     const likedProducts = useSelector((state: RootState) => state.likedProducts.likedProducts);
     
     const isLiked = (productId) => {
-        return likedProducts.some((product) => product.id === productId);
+        return likedProducts.some((product) => product.id == productId);
     };
 
     const handleToggleLike = (product) => {
